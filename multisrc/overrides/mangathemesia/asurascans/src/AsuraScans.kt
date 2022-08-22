@@ -29,6 +29,8 @@ open class AsuraScans(
 ),
     ConfigurableSource {
 
+    override val imgAttributes = super.imgAttributes + sequenceOf("abs:data-cfsrc")
+
     private val preferences: SharedPreferences by lazy {
         Injekt.get<Application>().getSharedPreferences("source_$id", 0x0000)
     }

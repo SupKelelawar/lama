@@ -1,9 +1,7 @@
 package eu.kanade.tachiyomi.extension.all.asurascans
 
 import eu.kanade.tachiyomi.source.SourceFactory
-import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SManga
-import org.jsoup.nodes.Document
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -17,15 +15,8 @@ class AsuraScansFactory : SourceFactory {
 class AsuraScansEn : AsuraScans("https://www.asurascans.com", "en", SimpleDateFormat("MMM d, yyyy", Locale.US)) {
 
     override val seriesDescriptionSelector = "div.desc p, div.entry-content p, div[itemprop=description]:not(:has(p))"
-
+    override val seriesTypeSelector = "${super.seriesTypeSelector}, .tsinfo .imptdt:contains(type) a"
     override val pageSelector = "div.rdminimal > img, div.rdminimal > p > img, div.rdminimal > a > img, div.rdminimal > p > a > img"
-
-    // Skip scriptPages
-    override fun pageListParse(document: Document): List<Page> {
-        return document.select(pageSelector)
-            .filterNot { it.attr("src").isNullOrEmpty() }
-            .mapIndexed { i, img -> Page(i, "", img.attr("src")) }
-    }
 }
 
 class AsuraScansTr : AsuraScans("https://tr.asurascans.com", "tr", SimpleDateFormat("MMM d, yyyy", Locale("tr"))) {

@@ -134,7 +134,7 @@ abstract class MangaThemesia(
     override fun searchMangaSelector() = ".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx"
 
     override fun searchMangaFromElement(element: Element) = SManga.create().apply {
-        thumbnail_url = element.select("img").imgAttr()
+        thumbnail_url = element.select(imgAttributes.map { "img[$it]" }.joinToString()).imgAttr()
         title = element.select("a").attr("title")
         setUrlWithoutDomain(element.select("a").attr("href"))
     }
@@ -449,7 +449,12 @@ abstract class MangaThemesia(
         }
     }
 
-    protected open fun Element.imgAttr(): String = if (this.hasAttr("data-src")) this.attr("abs:data-src") else this.attr("abs:src")
+    protected open val imgAttributes = sequenceOf("abs:data-src", "abs:src")
+    protected open fun Element.imgAttr(): String = imgAttributes
+        .filter(this::hasAttr)
+        .map(this::attr)
+        .filter { it.isNotBlank() }
+        .firstOrNull() ?: ""
     protected open fun Elements.imgAttr(): String = this.first().imgAttr()
 
     // Unused
