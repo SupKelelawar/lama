@@ -111,6 +111,7 @@ class ReaperScansEn : ParsedHttpSource() {
             "On hold" -> SManga.ON_HIATUS
             "Complete" -> SManga.COMPLETED
             "Ongoing" -> SManga.ONGOING
+            "Dropped" -> SManga.CANCELLED
             else -> SManga.UNKNOWN
         }
 
