@@ -113,6 +113,18 @@ class ReaperScansEn : ParsedHttpSource() {
             "Ongoing" -> SManga.ONGOING
             else -> SManga.UNKNOWN
         }
+
+        val genreList = mutableListOf<String>()
+        val seriesType = when (document.select("dt:contains(Source Language)").next().text()) {
+            "Korean" -> "Manhwa"
+            "Chinese" -> "Manhua"
+            "Japanese" -> "Manga"
+            else -> null
+        }
+
+        seriesType?.let { genreList.add(it) }
+
+        genre = genreList.takeIf { genreList.isNotEmpty() }?.joinToString(",")
         description = document.select("section > div:nth-child(1) > div > p").first().text()
     }
 
