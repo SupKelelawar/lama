@@ -33,6 +33,7 @@ import org.jsoup.nodes.Element
 import uy.kohesive.injekt.injectLazy
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class ReaperScans : ParsedHttpSource() {
 
@@ -176,7 +177,7 @@ class ReaperScans : ParsedHttpSource() {
     // Chapters
     private fun chapterListNextPageSelector(): String = "button[wire:click*=nextPage]"
 
-    override fun chapterListSelector() = "div[wire:id] > ul[role=list] > li"
+    override fun chapterListSelector() = "div[wire:id] > div > ul[role=list] > li"
 
     override fun chapterListParse(response: Response): List<SChapter> {
         var document = response.asJsoup()
@@ -200,6 +201,8 @@ class ReaperScans : ParsedHttpSource() {
         var pageToQuery = 1
         var hasNextPage = true
 
+        //  Javascript: (Math.random() + 1).toString(36).substring(8)
+        val generateId = { -> "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
         while (hasNextPage) {
             if (pageToQuery != 1) {
                 val payload = buildJsonObject {
@@ -209,7 +212,7 @@ class ReaperScans : ParsedHttpSource() {
                         addJsonObject {
                             put("type", "callMethod")
                             putJsonObject("payload") {
-                                put("id", "9jhcg")
+                                put("id", generateId())
                                 put("method", "gotoPage")
                                 putJsonArray("params") {
                                     add(pageToQuery)
