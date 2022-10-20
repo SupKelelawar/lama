@@ -182,17 +182,21 @@ class ReaperScans : ParsedHttpSource() {
     override fun chapterListSelector() = "div[wire:id] > div > ul[role=list] > li"
 
     override fun chapterListParse(response: Response): List<SChapter> {
-        var document = response.asJsoup()
+        val document = response.asJsoup()
         val chapters = mutableListOf<SChapter>()
+        document.select(chapterListSelector()).forEach { chapters.add(chapterFromElement(it)) }
+        var hasNextPage = document.selectFirst(chapterListNextPageSelector()) != null
+
+        if (!hasNextPage)
+            return chapters
 
         val csrfToken = document.selectFirst("meta[name=csrf-token]")?.attr("content")
+            ?: error("Couldn't find csrf-token")
 
         val livewareData = document.selectFirst("div[wire:initial-data*=Models\\\\Comic]")
             ?.attr("wire:initial-data")
             ?.parseJson<LiveWireDataDto>()
-
-        if (csrfToken == null) error("Couldn't find csrf-token")
-        if (livewareData == null) error("Couldn't find LiveWireData")
+            ?: error("Couldn't find LiveWireData")
 
         val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
             ?: error("Couldn't find routeName")
@@ -200,47 +204,43 @@ class ReaperScans : ParsedHttpSource() {
         val fingerprint = livewareData.fingerprint
         var serverMemo = livewareData.serverMemo
 
-        var pageToQuery = 1
-        var hasNextPage = true
+        var pageToQuery = 2
 
         //  Javascript: (Math.random() + 1).toString(36).substring(8)
-        val generateId = { -> "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
+        val generateId = { "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
         while (hasNextPage) {
-            if (pageToQuery != 1) {
-                val payload = buildJsonObject {
-                    put("fingerprint", fingerprint)
-                    put("serverMemo", serverMemo)
-                    putJsonArray("updates") {
-                        addJsonObject {
-                            put("type", "callMethod")
-                            putJsonObject("payload") {
-                                put("id", generateId())
-                                put("method", "gotoPage")
-                                putJsonArray("params") {
-                                    add(pageToQuery)
-                                    add("page")
-                                }
+            val payload = buildJsonObject {
+                put("fingerprint", fingerprint)
+                put("serverMemo", serverMemo)
+                putJsonArray("updates") {
+                    addJsonObject {
+                        put("type", "callMethod")
+                        putJsonObject("payload") {
+                            put("id", generateId())
+                            put("method", "gotoPage")
+                            putJsonArray("params") {
+                                add(pageToQuery)
+                                add("page")
                             }
                         }
                     }
-                }.toString().toRequestBody(JSON_MEDIA_TYPE)
+                }
+            }.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-                val headers = Headers.Builder()
-                    .add("x-csrf-token", csrfToken)
-                    .add("x-livewire", "true")
-                    .build()
+            val headers = Headers.Builder()
+                .add("x-csrf-token", csrfToken)
+                .add("x-livewire", "true")
+                .build()
 
-                val request = POST("$baseUrl/livewire/message/$routeName", headers, payload)
+            val request = POST("$baseUrl/livewire/message/$routeName", headers, payload)
 
-                val responseData = client.newCall(request).execute().parseJson<LiveWireResponseDto>()
+            val responseData = client.newCall(request).execute().parseJson<LiveWireResponseDto>()
 
-                // response contains state that we need to preserve
-                serverMemo = serverMemo.mergeLeft(responseData.serverMemo)
-                document = Jsoup.parse(responseData.effects.html, baseUrl)
-            }
-
-            document.select(chapterListSelector()).forEach { chapters.add(chapterFromElement(it)) }
-            hasNextPage = document.selectFirst(chapterListNextPageSelector()) != null
+            // response contains state that we need to preserve
+            serverMemo = serverMemo.mergeLeft(responseData.serverMemo)
+            val chaptersHtml = Jsoup.parse(responseData.effects.html, baseUrl)
+            chaptersHtml.select(chapterListSelector()).forEach { chapters.add(chapterFromElement(it)) }
+            hasNextPage = chaptersHtml.selectFirst(chapterListNextPageSelector()) != null
             pageToQuery++
         }
 
