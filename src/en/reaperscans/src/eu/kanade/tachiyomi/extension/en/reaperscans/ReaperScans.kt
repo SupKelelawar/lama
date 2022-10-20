@@ -104,6 +104,8 @@ class ReaperScans : ParsedHttpSource() {
         val routeName = livewareData.fingerprint["name"]?.jsonPrimitive?.contentOrNull
             ?: error("Couldn't find routeName")
 
+        //  Javascript: (Math.random() + 1).toString(36).substring(8)
+        val generateId = { -> "1.${Random.nextLong().toString(36)}".substring(10) } // Not exactly the same, but results in a 3-5 character string
         val payload = buildJsonObject {
             put("fingerprint", livewareData.fingerprint)
             put("serverMemo", livewareData.serverMemo)
@@ -111,7 +113,7 @@ class ReaperScans : ParsedHttpSource() {
                 addJsonObject {
                     put("type", "syncInput")
                     putJsonObject("payload") {
-                        put("id", "03r6")
+                        put("id", generateId())
                         put("name", "query")
                         put("value", query)
                     }
