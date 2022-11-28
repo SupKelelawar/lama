@@ -230,7 +230,7 @@ open class FlameScans(
 
         private const val PREF_PERM_CHAPTER_URL_KEY_PREFIX = "pref_permanent_chapter_url"
         private const val PREF_PERM_CHAPTER_URL_TITLE = "Permanent Chapter URL"
-        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent one."
+        private const val PREF_PERM_CHAPTER_URL_SUMMARY = "Turns all chapter urls into permanent ones."
 
         /**
          *
