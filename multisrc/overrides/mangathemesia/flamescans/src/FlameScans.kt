@@ -172,7 +172,6 @@ open class FlameScans(
     override fun fetchChapterList(manga: SManga) = super.fetchChapterList(manga.tempUrlToPermIfNeeded())
         .map { sChapterList -> sChapterList.map { it.tempUrlToPermIfNeeded() } }
 
-
     private fun SChapter.tempUrlToPermIfNeeded(): SChapter {
         val turnTempUrlToPerm = preferences.getBoolean(getPermanentChapterUrlPreferenceKey(), true)
         if (!turnTempUrlToPerm) return this
