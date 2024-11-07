@@ -74,7 +74,7 @@ jobs:
       - name: Build APK
         uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: ":multisrc:komikav:assembleDebug"
+          arguments: ":multisrc:wpmangastream:komikav:assembleDebug"
           gradle-home-cache-cleanup: true
 
       - name: Upload artifacts
