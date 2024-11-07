@@ -53,7 +53,7 @@ jobs:
       - name: Build APK
         env:
           CI: false
-        run: ./gradlew id-komikindo:assembleDebug
+        run: ./gradlew id-komikindoid:assembleDebug
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
