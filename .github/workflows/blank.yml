@@ -5,14 +5,14 @@ on:
     inputs:
       lang:
         description: Extension language (en, ar, es, pt...)
-        required: false
-        default: id
+        default: 'id'
+        required: true
       extension:
         description: Target extension name
+        default: 'kiryuu'
         required: true
-        default: komikav
       git-repo:
-        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions
+        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions)
         default: 'SupKelelawar/lama'
         required: false
       git-ref:
@@ -24,6 +24,7 @@ env:
   EXTPATH: ${{ github.event.inputs.lang }}/${{ github.event.inputs.extension }}
   EXTSLUG: ${{ github.event.inputs.lang }}:${{ github.event.inputs.extension }}
   REPO: ${{ github.event.inputs.git-repo }}
+  CI_MODULE_GEN: true
 
 jobs:
   build-extension:
@@ -31,13 +32,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check inputs
+        if: env.REPO == ''
         run: |
           set -e
-          if [[ -z "${{ env.REPO }}" ]]; then
-            echo "REPO=${{ github.repository_owner }}/aniyomi-extensions" >> $GITHUB_ENV
-          fi
-      - name: Clone Repository (Latest)
-        uses: actions/checkout@v4
+          echo "REPO=${{ github.repository_owner }}/aniyomi-extensions" >> $GITHUB_ENV
+
+      - name: Clone Repository
+        uses: actions/checkout@v3
         with:
           repository: ${{ env.REPO }}
           fetch-depth: 0
@@ -52,11 +53,11 @@ jobs:
       - name: Build APK
         env:
           CI: false
-        run: ./gradlew -p src ${{ env.EXTSLUG }}:assembleDebug
+        run: ./gradlew id-komikindo:assembleDebug
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{github.event.inputs.lang}}-${{ github.event.inputs.extension }}
+          name: ${{ github.event.inputs.lang }}-${{ github.event.inputs.extension }}
           path: "src/${{ env.EXTPATH }}/build/outputs/apk/debug/*.apk"
           retention-days: 1
