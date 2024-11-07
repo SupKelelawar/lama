@@ -21,7 +21,7 @@ if (System.getenv("CI") == null) {
         }
     }
     // Loads generated extensions from multisrc
-    File(rootDir, "generated-src").eachDir { dir ->
+    File(rootDir, "multisrc").eachDir { dir ->
         dir.eachDir { subdir ->
             val name = ":extensions:multisrc:${dir.name}:${subdir.name}"
             include(name)
