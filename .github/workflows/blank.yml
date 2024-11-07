@@ -6,26 +6,28 @@ on:
       lang:
         description: Extension language (en, ar, es, pt...)
         required: true
+        default: "id"
       extension:
         description: Target extension name
         required: true
+        default: "komikav"
       ismultisrc:
         type: boolean
         description: Its a multisrc extension
-        default: false
+        default: true
         required: false
       git-repo:
-        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions
-        default: ''
+        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions)
+        default: 'SupKelelawar/lama'
         required: false
       git-ref:
-        description: Git Ref (Optional, defaults to master)
-        default: 'master'
+        description: Git Ref (Optional, defaults to infernal-void-fix)
+        default: 'infernal-void-fix'
         required: false
 
 env:
   BASEPATH: src
-  BASESLUG: individual
+  BASESLUG: multisrc
   REPO: ${{ github.event.inputs.git-repo }}
   CI_MODULE_GEN: true
 
@@ -72,12 +74,12 @@ jobs:
       - name: Build APK
         uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: ":extensions:${{ env.BASESLUG }}:${{ github.event.inputs.lang }}:${{ github.event.inputs.extension }}:assembleDebug"
+          arguments: ":multisrc:overrides:wpmangastream:komikav:assembleDebug"
           gradle-home-cache-cleanup: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ github.event.inputs.lang }}-${{ github.event.inputs.extension }}
-          path: "${{ env.BASEPATH }}/${{ github.event.inputs.lang }}/${{ github.event.inputs.extension }}/build/outputs/apk/debug/*.apk"
+          path: "generated-src/${{ github.event.inputs.lang }}/${{ github.event.inputs.extension }}/build/outputs/apk/debug/*.apk"
           retention-days: 1
