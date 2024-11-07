@@ -5,51 +5,39 @@ on:
     inputs:
       lang:
         description: Extension language (en, ar, es, pt...)
-        required: true
-        default: "id"
+        required: false
+        default: id
       extension:
         description: Target extension name
         required: true
-        default: "komikav"
-      ismultisrc:
-        type: boolean
-        description: Its a multisrc extension
-        default: true
-        required: false
+        default: komikav
       git-repo:
-        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions)
-        default: 'SupKelelawar/lama'
+        description: Git repo (Optional, defaults to <your name>/aniyomi-extensions
+        default: 'imgview/ext'
         required: false
       git-ref:
-        description: Git Ref (Optional, defaults to infernal-void-fix)
+        description: Git Ref (Optional, defaults to master)
         default: 'infernal-void-fix'
         required: false
 
 env:
-  BASEPATH: src
-  BASESLUG: multisrc
+  EXTPATH: ${{ github.event.inputs.lang }}/${{ github.event.inputs.extension }}
+  EXTSLUG: ${{ github.event.inputs.lang }}:${{ github.event.inputs.extension }}
   REPO: ${{ github.event.inputs.git-repo }}
-  CI_MODULE_GEN: true
 
 jobs:
   build-extension:
     name: Build a single extension
     runs-on: ubuntu-latest
     steps:
-      - name: Check inputs and set environment variables
+      - name: Check inputs
         run: |
           set -e
           if [[ -z "${{ env.REPO }}" ]]; then
             echo "REPO=${{ github.repository_owner }}/aniyomi-extensions" >> $GITHUB_ENV
           fi
-          if [[ ${{ github.event.inputs.ismultisrc }} == 'true' ]]; then
-            echo "BASEPATH=generated-src" >> $GITHUB_ENV
-            echo "BASESLUG=multisrc" >> $GITHUB_ENV
-            echo "CI_MULTISRC=true" >> $GITHUB_ENV
-          fi
-
       - name: Clone Repository (Latest)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.REPO }}
           fetch-depth: 0
@@ -61,25 +49,14 @@ jobs:
           java-version: 11
           distribution: adopt
 
-      - name: Debug Gradle Projects
-        run: ./gradlew projects
-
-      - name: Generate multisrc extensions
-        if: ${{ github.event.inputs.ismultisrc == 'true' }}
-        uses: gradle/gradle-build-action@v2.3.3
-        with:
-          arguments: ':multisrc:generateExtensions'
-          gradle-home-cache-cleanup: true
-
       - name: Build APK
-        uses: gradle/gradle-build-action@v2.3.3
-        with:
-          arguments: ":multisrc:wpmangastream:komikav:assembleDebug"
-          gradle-home-cache-cleanup: true
+        env:
+          CI: false
+        run: ./gradlew -p src ${{ env.EXTSLUG }}:assembleDebug
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ github.event.inputs.lang }}-${{ github.event.inputs.extension }}
-          path: "generated-src/${{ github.event.inputs.lang }}/${{ github.event.inputs.extension }}/build/outputs/apk/debug/*.apk"
+          name: ${{github.event.inputs.lang}}-${{ github.event.inputs.extension }}
+          path: "src/${{ env.EXTPATH }}/build/outputs/apk/debug/*.apk"
           retention-days: 1
